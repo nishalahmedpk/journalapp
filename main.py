@@ -6,12 +6,40 @@ from datetime import date
 
 #functions
 
+font = 'Arial'
+
 today = date.today()
 
+def getsqldata():
+    with open('sql.txt','r+') as x:
+        l= x.readline()
+        return l
+
+sql = eval(getsqldata())
+rhost = sql['host']
+ruser = sql['user']
+rpass = sql['pass']
+
+def sqlconnector():
+    host = hostentry.get()
+    username = usernameentry.get()
+    password = passwordentry.get()
+    try:
+        con = connect(host=host,username=username,password=password)
+        if con.is_connected():
+            with open('sql.txt','w+') as x:
+                dictionary = {'host':host,'user':username,'pass':password}
+                x.write(str(dictionary))
+                connectionstatus.set('[ Connected : Restart App ]')
+        else: 
+            connectionstatus.set('[ Incorrect Details ]')
+    except DatabaseError:
+        connectionstatus.set('[ Incorrect Details ]')
+
 def sqlconnect():
-    con = connect(host='localhost',
-    user='root',
-    password='1234567890')
+    con = connect(host=rhost,
+    user=ruser,
+    password=rpass)
     cur = con.cursor()
     cur.execute("Create database if not exists journal")
     cur.execute("Use journal")
@@ -20,99 +48,159 @@ def sqlconnect():
     return con
 
 def submitentry(s,y):
-    entry = s
-    year,month,day=int(y[0:4]),int(y[5:7]),int(y[8:10])
-    dategiven = datetime.date(year,month,day)
-    if len(entry)>3 and dategiven<=today:
-        con = sqlconnect()
-        cur = con.cursor()
-        filename = y
-        count = len(entry)
-        try:
-            cur.execute(f"Insert into entries (date,wordcount,entry) values('{filename}',{int(count)},'{entry}') on duplicate key update wordcount={int(count)},entry='{entry}'")
-            con.commit()
-            con.close()
+    try:
+        entry = s.get(1.0, "end-1c")
+        year,month,day=int(y[0:4]),int(y[5:7]),int(y[8:10])
+        dategiven = datetime.date(year,month,day)
+        if len(entry)>3 and dategiven<=today:
+            con = sqlconnect()
+            cur = con.cursor()
+            filename = y
+            count = len(entry)
+            try:
+                cur.execute(f"Insert into entries (date,wordcount,entry) values('{filename}',{int(count)},'{entry}') on duplicate key update wordcount={int(count)},entry='{entry}'")
+                con.commit()
+                con.close()
 
-        except DataError:
-            messagebox.showerror('Error','Enter Valid Date.')
-    else:
-        messagebox.showerror('Error','Enter Valid Entry/Date.') 
+            except DataError:
+                s['state'] = 'normal'
+                s.delete(1.0,tk.END)
+                s.insert(0.0,str('ERROR: ENTER VALID DATE!'))
+        else:
+            s['state'] = 'normal'
+            s.delete(1.0,tk.END)
+            s.insert(0.0,str('ERROR: ENTER VALID ENTRY/DATE!')) 
+    except DatabaseError:
+        s['state'] = 'normal'
+        s.delete(1.0,tk.END)
+        s.insert(0.0,str('CONFIGURE WITH MYSQL TO USE APP'))
 
 def submitentry1():
-    submitentry(diaryentry.get(1.0, "end-1c"),dateentry.get())
+    submitentry(diaryentry,dateentry.get())
 
 def submitentry2():
-    submitentry(diaryentry1.get(1.0, "end-1c"),dateentry1.get())
+    submitentry(diaryentry1,dateentry1.get())
 
 def searchentry():
-    dategiven = dateentry1.get()
-    con = sqlconnect()
-    cur = con.cursor()
-    cur.execute(f"Select entry from entries where date='{dategiven}'")
-    check = cur.fetchall()
-    if check != []:
-        data = check[0]
+    try:
+        dategiven = dateentry1.get()
+        con = sqlconnect()
+        cur = con.cursor()
+        cur.execute(f"Select entry from entries where date='{dategiven}'")
+        check = cur.fetchall()
+        if check != []:
+            data = check[0]
+            diaryentry1['state'] = 'normal'
+            diaryentry1.delete(1.0,tk.END)
+            diaryentry1.insert(0.0,str(data[0]))
+
+        else:
+            diaryentry1['state'] = 'normal'
+            diaryentry1.delete(1.0,tk.END)
+            diaryentry1.insert(0.0,str('ERROR: ENTRY DO NOT EXIST!'))
+            diaryentry1['state'] = 'disabled'
+    except DatabaseError:
         diaryentry1['state'] = 'normal'
         diaryentry1.delete(1.0,tk.END)
-        diaryentry1.insert(0.0,str(data[0]))
-
-    else:
-        messagebox.showerror('Error','Entry do not exist.')
+        diaryentry1.insert(0.0,str('CONFIGURE WITH MYSQL TO USE APP'))
 
 def getentries():
-    con = sqlconnect()
-    cur = con.cursor()
-    cur.execute("Select date,wordcount from entries")
-    entylist = cur.fetchall()
-    con.close()
-    return entylist
+    try:
+        con = sqlconnect()
+        cur = con.cursor()
+        cur.execute("Select date,wordcount from entries order by date desc")
+        entylist = cur.fetchall()
+        con.close()
+        return entylist
+    except DatabaseError:
+        entylist=(['CONFIGURE WITH MYSQL TO USE APP'])
+        return entylist
 
+def click(d):
+    clickedbutton.set(d)
+    tabs.select(entriestab)
+    dateentry1.delete(0,tk.END)
+    dateentry1.insert(0,clickedbutton.get())
+    searchentry()
 
 root = tk.Tk()
 root.title("Journal")
 root.geometry('600x620')
 root.resizable(False,False)
 
-tabs = ttk.Notebook(root)
+addimg = tk.PhotoImage(file='add.png')
+entriesimg = tk.PhotoImage(file='entries.png')
+searchimg = tk.PhotoImage(file='search.png')
+sqlimg = tk.PhotoImage(file='sql.png')
 
-addentrytab = ttk.Frame(tabs)
-entriestab = ttk.Frame(tabs)
-listofentries = ttk.Frame(tabs)
+tabs = ttk.Notebook(root,padding=5)
 
-tabs.add(addentrytab,text='Add Entry')
-tabs.add(listofentries,text='Entry Log')
-tabs.add(entriestab,text='Search Entry')
+addentrytab = ttk.Frame(tabs,padding=5)
+entriestab = ttk.Frame(tabs,padding=5)
+listofentries = ttk.Frame(tabs,padding=5)
+sqlconfig = ttk.Frame(tabs,padding=5)
+
+tabs.add(addentrytab,image=addimg)
+tabs.add(listofentries,image=entriesimg)
+tabs.add(entriestab,image=searchimg)
+tabs.add(sqlconfig,text='SQL',image=sqlimg)
 
 #Tab1
-date = ttk.Label(addentrytab,text='Date:')
-date.grid(row=0,column=0, pady=10)
+date0 = ttk.Label(addentrytab,text='Date:')
+date0.grid(row=0,column=0, pady=10)
 dateentry = ttk.Entry(addentrytab)
 dateentry.grid(row=0,column=1)
 dateentry.insert(0,str(today))
-diaryentry = tk.Text(addentrytab,height=30,width=74)
+diaryentry = tk.Text(addentrytab,height=27,width=70)
 diaryentry.grid(row=1,column=0,columnspan=2,pady=10)
-submit = ttk.Button(addentrytab,text='Submit',command=submitentry1).grid(row=2,column=0,columnspan=2,pady=10)
+submit = ttk.Button(addentrytab,text='Submit',command=submitentry1,padding=5).grid(row=2,column=0,columnspan=2,pady=10)
 
-#Tab2
+#Tab3
 date1 = ttk.Label(entriestab,text='Date:').grid(row=0,column=0,sticky='E', pady=10)
 dateentry1 = ttk.Entry(entriestab)
 dateentry1.grid(row=0,column=1)
 submit1 = ttk.Button(entriestab,text='Search',command=searchentry).grid(row=0,column=2,sticky='W',pady=10)
-diaryentry1 = tk.Text(entriestab,height=30,state='disabled',width=74)
+diaryentry1 = tk.Text(entriestab,height=27,width=70,state='disabled')
 diaryentry1.grid(row=1,column=0,columnspan=3,pady=10)
 dateentry1.insert(0,str(today))
-submit3 = ttk.Button(entriestab,text='Submit',command=submitentry2).grid(row=2,column=0,columnspan=3,pady=10)
+submit3 = ttk.Button(entriestab,text='Submit',command=submitentry2,padding=5).grid(row=2,column=0,columnspan=3,pady=10)
 
-#Tab3
-canvas = ttk.Labelframe(listofentries,padding=10)
-canvas.pack(side='left',expand=1,fill='both')
+#Tab2
+canvas = tk.Canvas(listofentries,relief='flat')
+canvas.pack(side='left',expand=1,fill='both',padx=10,pady=10)
 l=list(getentries())
-for i in l:
-    s= 'Date: '+str(i[0])+'     Wordcount:'+str(i[1])
-    log = ttk.Button(canvas,text=s,width=88,padding=10)
-    log.grid(pady=10)
+clickedbutton = tk.StringVar()
+try:
+    con = sqlconnect()
+    for i in range(len(l)): #date entry1.insert then search
+        s= 'Date: '+str(l[i][0])+'     Wordcount:'+str(l[i][1])
+        k = str(l[i][0])
+        i = ttk.Button(canvas,text=s,width=80,padding=10,command=lambda d=k:click(d))
+        i.pack(anchor='center',pady=10)
+except DatabaseError:
+    i = ttk.Button(canvas,text=l[0],width=80,padding=10,command=submitentry2)
+    i.pack(anchor='center',pady=10)
 scrollbar = tk.Scrollbar(listofentries,orient='vertical')
 scrollbar.pack(side='right',fill='both')
 
-tabs.pack(expand=1,fill='both')
+#Tab4
+connectionstatus = tk.StringVar()
+sqlconfigcanvas = tk.LabelFrame(sqlconfig,relief='flat')
+sqlconfigcanvas.pack(expand=1,fill='both',anchor='center',padx=180,pady=150)
+host = ttk.Label(sqlconfigcanvas,text='Host: ').grid(row=0,column=0,sticky='E', pady=10)
+hostentry = ttk.Entry(sqlconfigcanvas)
+hostentry.grid(row=0,column=1)
+hostentry.insert(0,rhost)
+username = ttk.Label(sqlconfigcanvas,text='Username: ').grid(row=1,column=0,sticky='E', pady=10)
+usernameentry = ttk.Entry(sqlconfigcanvas)
+usernameentry.grid(row=1,column=1)
+usernameentry.insert(0,ruser)
+password = ttk.Label(sqlconfigcanvas,text='Password: ').grid(row=2,column=0,sticky='E', pady=10)
+passwordentry = ttk.Entry(sqlconfigcanvas)
+passwordentry.grid(row=2,column=1)
+passwordentry.insert(0,rpass)
+submit4 = ttk.Button(sqlconfigcanvas,text='Submit',command=sqlconnector,width=30).grid(row=3,column=0,columnspan=2,pady=10)
+statuslabel= ttk.Label(sqlconfigcanvas,textvariable=connectionstatus).grid(row=4,column=0,columnspan=2,pady=10)
+
+tabs.pack(fill='both',expand=1,padx=5,pady=5)
 root.mainloop()
