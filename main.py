@@ -127,7 +127,7 @@ def click(d):
 
 root = tk.Tk()
 root.title("Journal App")
-root.geometry('600x620')
+root.geometry('600x620+20+20')
 root.resizable(False,False)
 root.config(background=bg)
 
