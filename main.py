@@ -6,7 +6,9 @@ from datetime import date
 
 #functions
 
-font = 'Arial'
+bg = 'green'
+fg = 'black'
+font = ('Bahnschrift',10)
 
 today = date.today()
 
@@ -124,15 +126,22 @@ def click(d):
     searchentry()
 
 root = tk.Tk()
-root.title("Journal")
+root.title("Journal App")
 root.geometry('600x620')
 root.resizable(False,False)
+root.config(background=bg)
+
+ttk.Style().configure("TButton", relief="flat",foreground=bg,font=font)
+ttk.Style().configure("TNotebook", relief="flat",background=bg)
+ttk.Style().configure("TLabel", relief="flat",foreground=bg,font=font)
+
 
 addimg = tk.PhotoImage(file='add.png')
 entriesimg = tk.PhotoImage(file='entries.png')
 searchimg = tk.PhotoImage(file='search.png')
 sqlimg = tk.PhotoImage(file='sql.png')
 
+root.iconbitmap('icon.ico')
 tabs = ttk.Notebook(root,padding=5)
 
 addentrytab = ttk.Frame(tabs,padding=5)
@@ -151,7 +160,7 @@ date0.grid(row=0,column=0, pady=10)
 dateentry = ttk.Entry(addentrytab)
 dateentry.grid(row=0,column=1)
 dateentry.insert(0,str(today))
-diaryentry = tk.Text(addentrytab,height=27,width=70)
+diaryentry = tk.Text(addentrytab,height=27,width=80,font=font)
 diaryentry.grid(row=1,column=0,columnspan=2,pady=10)
 submit = ttk.Button(addentrytab,text='Submit',command=submitentry1,padding=5).grid(row=2,column=0,columnspan=2,pady=10)
 
@@ -160,7 +169,7 @@ date1 = ttk.Label(entriestab,text='Date:').grid(row=0,column=0,sticky='E', pady=
 dateentry1 = ttk.Entry(entriestab)
 dateentry1.grid(row=0,column=1)
 submit1 = ttk.Button(entriestab,text='Search',command=searchentry).grid(row=0,column=2,sticky='W',pady=10)
-diaryentry1 = tk.Text(entriestab,height=27,width=70,state='disabled')
+diaryentry1 = tk.Text(entriestab,height=27,width=80,state='disabled',font=font)
 diaryentry1.grid(row=1,column=0,columnspan=3,pady=10)
 dateentry1.insert(0,str(today))
 submit3 = ttk.Button(entriestab,text='Submit',command=submitentry2,padding=5).grid(row=2,column=0,columnspan=3,pady=10)
@@ -175,10 +184,10 @@ try:
     for i in range(len(l)): #date entry1.insert then search
         s= 'Date: '+str(l[i][0])+'     Wordcount:'+str(l[i][1])
         k = str(l[i][0])
-        i = ttk.Button(canvas,text=s,width=80,padding=10,command=lambda d=k:click(d))
+        i = ttk.Button(canvas,text=s,width=60,padding=10,command=lambda d=k:click(d))
         i.pack(anchor='center',pady=10)
 except DatabaseError:
-    i = ttk.Button(canvas,text=l[0],width=80,padding=10,command=submitentry2)
+    i = ttk.Button(canvas,text=l[0],width=60,padding=10,command=submitentry2)
     i.pack(anchor='center',pady=10)
 scrollbar = tk.Scrollbar(listofentries,orient='vertical')
 scrollbar.pack(side='right',fill='both')
@@ -186,7 +195,7 @@ scrollbar.pack(side='right',fill='both')
 #Tab4
 connectionstatus = tk.StringVar()
 sqlconfigcanvas = tk.LabelFrame(sqlconfig,relief='flat')
-sqlconfigcanvas.pack(expand=1,fill='both',anchor='center',padx=180,pady=150)
+sqlconfigcanvas.pack(expand=1,fill='both',anchor='center',padx=170,pady=150)
 host = ttk.Label(sqlconfigcanvas,text='Host: ').grid(row=0,column=0,sticky='E', pady=10)
 hostentry = ttk.Entry(sqlconfigcanvas)
 hostentry.grid(row=0,column=1)
