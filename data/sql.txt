@@ -1,0 +1,1 @@
+{'host': ' sql6.freesqldatabase.com', 'user': 'sql6586924', 'pass': 'xE4CKbJytH', 'database': 'sql6586924'}

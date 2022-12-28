@@ -13,7 +13,7 @@ font = ('Bahnschrift',10)
 today = date.today()
 
 def getsqldata():
-    with open('sql.txt','r+') as x:
+    with open('data\\sql.txt','r+') as x:
         l= x.readline()
         return l
 
@@ -31,7 +31,7 @@ def sqlconnector():
     try:
         con = connect(host=host,username=username,password=password,database=database)
         if con.is_connected():
-            with open('sql.txt','w+') as x:
+            with open('data\\sql.txt','w+') as x:
                 dictionary = {'host':host,'user':username,'pass':password,'database':database}
                 x.write(str(dictionary))
                 connectionstatus.set('[ Connected : Restart App ]')
@@ -136,12 +136,12 @@ ttk.Style().configure("TNotebook", relief="flat",background=bg)
 ttk.Style().configure("TLabel", relief="flat",foreground=bg,font=font)
 
 
-addimg = tk.PhotoImage(file='add.png')
-entriesimg = tk.PhotoImage(file='entries.png')
-searchimg = tk.PhotoImage(file='search.png')
-sqlimg = tk.PhotoImage(file='sql.png')
+addimg = tk.PhotoImage(file='images\\add.png')
+entriesimg = tk.PhotoImage(file='images\\entries.png')
+searchimg = tk.PhotoImage(file='images\\search.png')
+sqlimg = tk.PhotoImage(file='images\\sql.png')
 
-root.iconbitmap('icon.ico')
+root.iconbitmap('images\\icon.ico')
 tabs = ttk.Notebook(root,padding=5)
 
 addentrytab = ttk.Frame(tabs,padding=5)
