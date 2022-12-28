@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk,messagebox
+from tkinter import ttk
 from mysql.connector import *
 import datetime
 from datetime import date
@@ -21,16 +21,18 @@ sql = eval(getsqldata())
 rhost = sql['host']
 ruser = sql['user']
 rpass = sql['pass']
+rdb = sql['database']
 
 def sqlconnector():
     host = hostentry.get()
     username = usernameentry.get()
     password = passwordentry.get()
+    database = dbentry.get()
     try:
-        con = connect(host=host,username=username,password=password)
+        con = connect(host=host,username=username,password=password,database=database)
         if con.is_connected():
             with open('sql.txt','w+') as x:
-                dictionary = {'host':host,'user':username,'pass':password}
+                dictionary = {'host':host,'user':username,'pass':password,'database':database}
                 x.write(str(dictionary))
                 connectionstatus.set('[ Connected : Restart App ]')
         else: 
@@ -41,10 +43,8 @@ def sqlconnector():
 def sqlconnect():
     con = connect(host=rhost,
     user=ruser,
-    password=rpass)
+    password=rpass,database=rdb)
     cur = con.cursor()
-    cur.execute("Create database if not exists journal")
-    cur.execute("Use journal")
     cur.execute("Create table if not exists entries(sno int primary key auto_increment,date date not null unique,wordcount int not null,entry varchar(5000) not null)")
     con.commit()
     return con
@@ -175,17 +175,28 @@ dateentry1.insert(0,str(today))
 submit3 = ttk.Button(entriestab,text='Submit',command=submitentry2,padding=5).grid(row=2,column=0,columnspan=3,pady=10)
 
 #Tab2
-canvas = tk.Canvas(listofentries,relief='flat')
-canvas.pack(side='left',expand=1,fill='both',padx=10,pady=10)
-l=list(getentries())
-clickedbutton = tk.StringVar()
-try:
-    con = sqlconnect()
+def listofentriesbuttons(l):
+    global canvas
+    canvas = tk.Canvas(listofentries,relief='flat')
+    canvas.pack(side='left',expand=1,fill='both',padx=10,pady=10)
+    refresh = ttk.Button(canvas,text='REFRESH',width=60,padding=10,command=listofentriesdestroy)
+    refresh.pack(anchor='center',pady=10)
     for i in range(len(l)): #date entry1.insert then search
         s= 'Date: '+str(l[i][0])+'     Wordcount:'+str(l[i][1])
         k = str(l[i][0])
         i = ttk.Button(canvas,text=s,width=60,padding=10,command=lambda d=k:click(d))
         i.pack(anchor='center',pady=10)
+def listofentriesdestroy():
+    global canvas
+    l=list(getentries())
+    canvas.destroy()
+    listofentriesbuttons(l)
+
+l=list(getentries())
+clickedbutton = tk.StringVar()
+try:
+    con = sqlconnect()
+    listofentriesbuttons(l)
 except DatabaseError:
     i = ttk.Button(canvas,text=l[0],width=60,padding=10,command=submitentry2)
     i.pack(anchor='center',pady=10)
@@ -208,8 +219,12 @@ password = ttk.Label(sqlconfigcanvas,text='Password: ').grid(row=2,column=0,stic
 passwordentry = ttk.Entry(sqlconfigcanvas)
 passwordentry.grid(row=2,column=1)
 passwordentry.insert(0,rpass)
-submit4 = ttk.Button(sqlconfigcanvas,text='Submit',command=sqlconnector,width=30).grid(row=3,column=0,columnspan=2,pady=10)
-statuslabel= ttk.Label(sqlconfigcanvas,textvariable=connectionstatus).grid(row=4,column=0,columnspan=2,pady=10)
+db = ttk.Label(sqlconfigcanvas,text='Database: ').grid(row=3,column=0,sticky='E', pady=10)
+dbentry = ttk.Entry(sqlconfigcanvas)
+dbentry.grid(row=3,column=1)
+dbentry.insert(0,rdb)
+submit4 = ttk.Button(sqlconfigcanvas,text='Submit',command=sqlconnector,width=30).grid(row=4,column=0,columnspan=2,pady=10)
+statuslabel= ttk.Label(sqlconfigcanvas,textvariable=connectionstatus).grid(row=5,column=0,columnspan=2,pady=10)
 
 tabs.pack(fill='both',expand=1,padx=5,pady=5)
 root.mainloop()
