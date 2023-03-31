@@ -11,6 +11,8 @@ fg = 'black'
 font = ('Bahnschrift',10)
 
 today = date.today()
+dayoftoday = (today.strftime('%A'))
+
 
 def getsqldata():
     with open('data\\sql.txt','r+') as x:
@@ -45,7 +47,7 @@ def sqlconnect():
     user=ruser,
     password=rpass,database=rdb)
     cur = con.cursor()
-    cur.execute("Create table if not exists entries(sno int primary key auto_increment,date date not null unique,wordcount int not null,entry varchar(5000) not null)")
+    cur.execute("Create table if not exists entries(sno int primary key auto_increment,date date not null unique,wordcount int not null,entry varchar(5000) not null,day varchar(10))")
     con.commit()
     return con
 
@@ -55,12 +57,13 @@ def submitentry(s,y):
         year,month,day=int(y[0:4]),int(y[5:7]),int(y[8:10])
         dategiven = datetime.date(year,month,day)
         if len(entry)>3 and dategiven<=today:
+            dayoftoday = (dategiven.strftime('%A'))
             con = sqlconnect()
             cur = con.cursor()
             filename = y
             count = len(entry)
             try:
-                cur.execute(f"Insert into entries (date,wordcount,entry) values('{filename}',{int(count)},'{entry}') on duplicate key update wordcount={int(count)},entry='{entry}'")
+                cur.execute(f"Insert into entries (date,wordcount,entry,day) values('{filename}',{int(count)},'{entry}','{dayoftoday}') on duplicate key update wordcount={int(count)},entry='{entry}'")
                 con.commit()
                 con.close()
 
@@ -110,7 +113,7 @@ def getentries():
     try:
         con = sqlconnect()
         cur = con.cursor()
-        cur.execute("Select date,wordcount from entries order by date desc")
+        cur.execute("Select date,wordcount,day from entries order by date desc")
         entylist = cur.fetchall()
         con.close()
         return entylist
@@ -182,7 +185,7 @@ def listofentriesbuttons(l):
     refresh = ttk.Button(canvas,text='REFRESH',width=60,padding=10,command=listofentriesdestroy)
     refresh.pack(anchor='center',pady=10)
     for i in range(len(l)): #date entry1.insert then search
-        s= 'Date: '+str(l[i][0])+'     Wordcount:'+str(l[i][1])
+        s= 'Day: '+str(l[i][2])+'     Date: '+str(l[i][0])+'     Wordcount: '+str(l[i][1])
         k = str(l[i][0])
         i = ttk.Button(canvas,text=s,width=60,padding=10,command=lambda d=k:click(d))
         i.pack(anchor='center',pady=10)
