@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk,messagebox
 from mysql.connector import *
 import datetime
 from datetime import date
@@ -201,8 +201,7 @@ try:
     con = sqlconnect()
     listofentriesbuttons(l)
 except DatabaseError:
-    i = ttk.Button(canvas,text=l[0],width=60,padding=10,command=submitentry2)
-    i.pack(anchor='center',pady=10)
+    messagebox.showerror('Error','Create a database in mysql, or configure with the made database in the last tab.')
 scrollbar = tk.Scrollbar(listofentries,orient='vertical')
 scrollbar.pack(side='right',fill='both')
 
