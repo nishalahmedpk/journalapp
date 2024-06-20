@@ -1,4 +1,13 @@
-# Journal App
-![image](https://user-images.githubusercontent.com/102826158/209846451-b8d9dbd9-a1fb-456a-838e-4e6c4a14faa1.png)
-![image](https://user-images.githubusercontent.com/102826158/209846539-e54ac6a3-9858-4de6-89fc-33013b303ba2.png)
+# Journal App w/ Tkinter
+Basic journaling app which takes in input with the aid of a gui made using tkinter and stores the data in sql.
 
+## Prerequisites
+1. Python
+2. mySQL
+3. mysql_connecter module
+   
+## Setup
+1. Create a database for storing the entries. (Can be done locally or on a remote server)
+2. If the database created by is names 'journal' u can use the app by running main.py. If not go to the last tab and set the database name.
+   
+Note: The app is not yet compiled to an .exe format.
